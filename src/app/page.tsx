@@ -1,127 +1,18 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import Analysis from "@/components/analysis";
-import AnalysisHeader from "@/components/analysisHeader";
+import { useRouter, useSearchParams } from "next/navigation";
+import Footer from "@/components/footer";
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File>();
   const [isLoading, setIsLoading] = useState(false);
-  const [cleanResult, setCleanResult] = useState(null);
-  const [designResult, setDesignResult] = useState<string | null>(null);
-  const [hypothesisTestingResult, setHypothesisTestingResult] = useState<
-    string[]
-  >([]);
-  const [pvals, setPvals] = useState<string[]>([]);
-  const [analyzeResult, setAnalyzeResult] = useState(null);
-  const [currentStep, setCurrentStep] = useState(0);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const cleanData = async () => {
-    const url = "/api/data_cleaning";
-    const formData = new FormData();
-    formData.append("file", file as Blob);
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const result = await response.json();
-      setCleanResult(result);
-      setCurrentStep(1);
-      return result.summary;
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  const designProcedure = async () => {
-    const url = "/api/design_procedure";
-    const formData = new FormData();
-    formData.append("file", file as Blob);
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const result = await response.text();
-      setDesignResult(result);
-      setCurrentStep(2);
-      console.log("Analysis Procedure:", result);
-      return result;
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  const hypothesisTest = async (designResult: string | null) => {
-    const url = "/api/hypothesis_test";
-    console.log("DESIGN RESULT: ", designResult);
-    try {
-      const formData = new FormData();
-      formData.append("file", file as Blob);
-
-      if (designResult) {
-        formData.append("designResult", designResult);
-      } else {
-        console.error("Design result is missing");
-        return;
-      }
-
-      const response = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const result = await response.json();
-      console.log("Raw response:", result);
-      setHypothesisTestingResult(result);
-      setCurrentStep(3);
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  const summarize = async (
-    cleaning_summary: string | null,
-    potential_relationships: string | null,
-    p_values_summary: string | null
-  ) => {
-    const url = "/api/summarize";
-    const data = {
-      cleaning_summary,
-      potential_relationships,
-      p_values_summary,
-    };
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
 
   // Run handleUpload when file changes
   useEffect(() => {
@@ -129,6 +20,29 @@ export default function Home() {
       handleUpload();
     }
   }, [file]);
+
+  const uploadFile = async () => {
+    const url = "/api/upload-file";
+    const formData = new FormData();
+    formData.append("file", file as Blob);
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const result = await response.json();
+
+      return result.id;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -160,24 +74,10 @@ export default function Home() {
       setIsLoading(true);
 
       try {
-        console.log("Processing file:", file.name);
-        toast.success("Processing file", {
-          description: file.name,
-        });
-
-        const cleanSummary = await cleanData();
-        const designRes = await designProcedure();
-        await hypothesisTest(designRes ?? null);
-        // await summarize(
-        //   cleanSummary ?? null,
-        //   designRes ?? null,
-        //   "p values go here"
-        // );
-
-        // Implement your file upload/processing functionality here
-        toast.success("File processed successfully", {
-          description: file.name,
-        });
+        const id = await uploadFile();
+        const params = new URLSearchParams(searchParams);
+        params.set("id", id);
+        router.push("/analysis?" + params.toString());
       } catch (error) {
         toast.error("Error processing file", {
           description: "An unexpected error occurred",
@@ -194,17 +94,9 @@ export default function Home() {
     }
   };
 
-  const backToHome = () => {
-    setFile(null);
-    setCleanResult(null);
-    setDesignResult(null);
-    setHypothesisTestingResult([]);
-    setAnalyzeResult(null);
-    setIsLoading(false);
-  };
 
   return (
-    <div className="bg-white flex items-center justify-center items-center w-full h-screen font-[family-name:var(--font-geist-sans)]">
+    <div className="bg-white flex justify-center items-center w-full h-screen font-[family-name:var(--font-geist-sans)]">
       {!file && (
         <div className="flex flex-col gap-6 row-start-2 items-center justify-center w-3/4">
           <div className="flex flex-col gap-2 items-center justify-center text-center text-primary/80">
@@ -233,9 +125,8 @@ export default function Home() {
                 />
                 <label
                   htmlFor="fileUpload"
-                  className={`text-lg text-center flex-col gap-2 m-auto px-20 py-10 border-2 border-dashed border-primary/50 cursor-pointer flex items-center rounded-md text-primary hover:bg-primary/10 ${
-                    isLoading ? "opacity-50 pointer-events-none" : ""
-                  }`}
+                  className={`text-lg text-center flex-col gap-2 m-auto px-20 py-10 border-2 border-dashed border-primary/50 cursor-pointer flex items-center rounded-md text-primary hover:bg-primary/10 ${isLoading ? "opacity-50 pointer-events-none" : ""
+                    }`}
                 >
                   <Upload className="h-8 aspect-square" />
                   Upload CSV
@@ -245,35 +136,7 @@ export default function Home() {
           </div>
         </div>
       )}
-      {file && (
-        <div className="flex flex-col gap-2 w-full h-screen items-center justify-center">
-          <AnalysisHeader onAction={backToHome} />
-          <Analysis
-            cleanResult={cleanResult}
-            designResult={designResult}
-            hypothesisTestingResult={hypothesisTestingResult}
-            analyzeResult={analyzeResult}
-            currentStep={currentStep}
-          />
-        </div>
-      )}
-      <footer className="bg-gray-200 w-full h-12 text-xs row-start-3 flex items-center justify-center fixed bottom-0">
-        <a
-          className="gap-2 text-gray-600 text-bold flex items-center hover:underline hover:underline-offset-4"
-          href="https://github.com/aadia1234/DataVision"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/github-logo.svg"
-            alt="Globe icon"
-            width={12}
-            height={12}
-          />
-          GitHub Repository
-        </a>
-      </footer>
+      <Footer />
     </div>
   );
 }

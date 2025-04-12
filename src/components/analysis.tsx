@@ -11,7 +11,7 @@ import { Send, Paperclip } from "lucide-react";
 interface AnalysisProps {
   cleanResult: Record<string, any> | null;
   designResult: string | null;
-  hypothesisTestingResult: string[] | null;
+  hypothesisTestingResult: any | null;
   analyzeResult: string | null;
   currentStep: number;
 }
@@ -172,119 +172,114 @@ export default function Analysis({
   );
 
   return (
-    <div className="w-2/3 overflow-y-scroll">
-      <div className="mt-[3.5rem] ">
+    <div className="w-full">
+      <DropDown
+        text="Cleaning Data"
+        clicked={currentStep}
+        phaseNum={0}
+        data={CleaningStepData}
+      />
+      {currentStep > 0 && (
         <DropDown
-          text="Cleaning Data"
+          text="Designing Analysis Procedure"
           clicked={currentStep}
-          phaseNum={0}
-          data={CleaningStepData}
+          phaseNum={1}
+          data={DesignStepData}
         />
-        {currentStep > 0 && (
-          <DropDown
-            text="Designing Analysis Procedure"
-            clicked={currentStep}
-            phaseNum={1}
-            data={DesignStepData}
-          />
-        )}
-        {currentStep > 1 && (
-          <ImageDropDown
-            text="Running Statistical Tests"
-            clicked={currentStep}
-            phaseNum={2}
-            images={hypothesisTestingResult || []}
-          />
-        )}
-        {currentStep > 2 && (
-          <DropDown
-            text="Found Data!"
-            clicked={currentStep}
-            phaseNum={3}
-            data={tempData}
-          />
-        )}
-      </div>
+      )}
+      {currentStep > 1 && (
+        <ImageDropDown
+          text="Running Statistical Tests"
+          clicked={currentStep}
+          phaseNum={2}
+          images={hypothesisTestingResult.figures || []}
+          p_vals={hypothesisTestingResult.p_values || []}
+        />
+      )}
+      {currentStep > 2 && (
+        <DropDown
+          text="Found Data!"
+          clicked={currentStep}
+          phaseNum={3}
+          data={tempData}
+        />
+      )}
 
-      <div className="p-4 pb-20">
-        <div className="mt-8 border rounded-lg shadow-md">
-          <div className="bg-gray-100 p-4 rounded-t-lg border-b">
-            <h3 className="font-semibold text-gray-800">
-              Data Analysis Assistant
-            </h3>
-          </div>
+      <div className="mt-8 border rounded-lg shadow-md">
+        <div className="bg-gray-100 p-4 rounded-t-lg border-b">
+          <h3 className="font-semibold text-gray-800">
+            Data Analysis Assistant
+          </h3>
+        </div>
 
-          <div className="h-80 overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
+        <div className="h-80 overflow-y-auto p-4 space-y-4">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
               <div
-                key={message.id}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
+                className={`max-w-3/4 p-3 rounded-lg ${
+                  message.role === "user"
+                    ? "bg-blue-500 text-white rounded-br-none"
+                    : "bg-gray-200 text-gray-800 rounded-bl-none"
                 }`}
               >
+                {message.content}
                 <div
-                  className={`max-w-3/4 p-3 rounded-lg ${
-                    message.role === "user"
-                      ? "bg-blue-500 text-white rounded-br-none"
-                      : "bg-gray-200 text-gray-800 rounded-bl-none"
+                  className={`text-xs mt-1 ${
+                    message.role === "user" ? "text-blue-100" : "text-gray-500"
                   }`}
                 >
-                  {message.content}
+                  {message.timestamp.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-gray-200 text-gray-800 p-3 rounded-lg rounded-bl-none">
+                <div className="flex space-x-2">
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
                   <div
-                    className={`text-xs mt-1 ${
-                      message.role === "user"
-                        ? "text-blue-100"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
+                    className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.4s" }}
+                  ></div>
                 </div>
               </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-200 text-gray-800 p-3 rounded-lg rounded-bl-none">
-                  <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                    <div
-                      className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.4s" }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
 
-          <div className="p-3 border-t flex gap-2">
-            <Button variant="outline" size="icon" className="shrink-0">
-              <Paperclip className="h-5 w-5" />
-            </Button>
-            <Input
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1"
-            />
-            <Button
-              onClick={sendMessage}
-              disabled={isLoading || !inputMessage.trim()}
-              className="shrink-0"
-            >
-              <Send className="h-5 w-5 mr-1" />
-              Send
-            </Button>
-          </div>
+        <div className="p-3 border-t flex gap-2">
+          <Button variant="outline" size="icon" className="shrink-0">
+            <Paperclip className="h-5 w-5" />
+          </Button>
+          <Input
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Type your message..."
+            className="flex-1"
+          />
+          <Button
+            onClick={sendMessage}
+            disabled={isLoading || !inputMessage.trim()}
+            className="shrink-0"
+          >
+            <Send className="h-5 w-5 mr-1" />
+            Send
+          </Button>
         </div>
       </div>
     </div>
