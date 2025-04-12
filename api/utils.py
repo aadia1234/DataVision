@@ -9,7 +9,7 @@ load_dotenv()
 SYSTEM_PROMPT = """You are a helpful data analysis assistant. Keep responses concise and focused on the current task."""
 
 def cleanCode(code):
-    return code.replace("'''python", "").replace("```json", "").replace("```", "")
+    return code.replace("```python", "").replace("```json", "").replace("```", "")
 
 def overview_data(df):
     output = "Data Overview:\n"
