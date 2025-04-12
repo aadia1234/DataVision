@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from flask import jsonify
 import json
+import io
 
 clean_data_prompt_template = PromptTemplate.from_template("""
 You are an expert data scientist. Your task is to observe an overview of what is contained
@@ -48,10 +49,14 @@ def data_clean(df, llm):
 
             if clean_function:
                 cleaned_df = clean_function(df)
+                csv_buffer = io.StringIO()
+                cleaned_df.to_csv(csv_buffer, index=False)
+                csv_string = csv_buffer.getvalue()
                 return jsonify({
                     "summary": summary,
                     "code": code,
-                    "cleaned_df": cleaned_df.to_dict(orient='records')
+                    "cleaned_df": cleaned_df.to_dict(orient='records'),
+                    "csv": csv_string,
                 })
             else:
                 return jsonify({"error": "Cleaning function not found in generated code."})

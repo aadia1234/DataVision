@@ -11,7 +11,15 @@ import AnalysisHeader from "@/components/analysisHeader";
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+<<<<<<< HEAD
   const [visuals, setVisuals] = useState<string[]>([]);
+=======
+  const [cleanResult, setCleanResult] = useState(null);
+  const [designResult, setDesignResult] = useState<string | null>(null);
+  const [visualizeResult, setVisualizeResult] = useState(null);
+  const [analyzeResult, setAnalyzeResult] = useState(null);
+  const [currentStep, setCurrentStep] = useState(0);
+>>>>>>> main
 
   const getHypothesisVisuals = async () => {
     const url = "/api/hypothesis_visuals";
@@ -58,6 +66,8 @@ export default function Home() {
       }
 
       const result = await response.json();
+      setCleanResult(result);
+      setCurrentStep(1);
       console.log("Cleaning Step:", result);
     } catch (error) {
       console.error("Error:", error);
@@ -79,6 +89,8 @@ export default function Home() {
       }
 
       const result = await response.text();
+      setDesignResult(result);
+      setCurrentStep(2);
       console.log("Analysis Procedure:", result);
     } catch (error) {
       console.error("Error:", error);
@@ -197,11 +209,19 @@ export default function Home() {
         <div className="flex flex-col gap-2 w-2/3 h-screen items-center justify-center">
           <AnalysisHeader />
           <Analysis
+<<<<<<< HEAD
             cleaned={true}
             designed={true}
             visualized={true}
             analyzed={true}
             visuals={visuals}
+=======
+            cleanResult={cleanResult}
+            designResult={designResult}
+            visualizeResult={visualizeResult}
+            analyzeResult={analyzeResult}
+            currentStep={currentStep}
+>>>>>>> main
           />
         </div>
       )}
