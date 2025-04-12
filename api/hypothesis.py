@@ -4,23 +4,11 @@ import base64
 from io import BytesIO
 import numpy as np
 import pandas as pd
-from dotenv import load_dotenv
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 import utils
 
 
-load_dotenv()
-
-api_key = os.getenv("GEMINI_API_KEY")
-
-llm = GoogleGenerativeAI(
-    model="gemini-2.0-flash",
-    google_api_key=api_key,
-    temperature=0.7,
-)
-
-df = pd.read_csv("customers-100.csv")
 
 hypothesis_testing_prompt_template = PromptTemplate.from_template("""
     You are an expert data scientist. Your task is to write a function that conducts a series of 
@@ -62,6 +50,7 @@ def hypothesis_testing(df, llm, instructions):
     hypothesis_testing_prompt = hypothesis_testing_prompt_template.format(data_overview=data_overview, instructions=instructions)
     code = utils.cleanCode(llm.invoke(hypothesis_testing_prompt))
     print("CODE: \n", code)
+    plotstrings = []
 
     try:
         local_env = {}
@@ -71,22 +60,13 @@ def hypothesis_testing(df, llm, instructions):
         if hypothesis_test:
             figures = hypothesis_test(df)
             figures[0].savefig("firstgraph.png")
-            return "Success!"
+            figures = hypothesis_test(df)
+            base64_figures = [utils.convert_plt_to_base64(fig) for fig in figures]
+            return {
+                "status": "success",
+                "figures": base64_figures
+            }
         else:
             return "Hypothesis testing function not found in generated code."
     except Exception as e:
         return "Error running generated hypothesis testing code:" + str(e)
-
-
-
-test_procedure = """
-
-Analysis Results:
-Relationship between Country and Company. Hypothesis test: Chi-squared test.
-Relationship between Country and Subscription Date. Hypothesis test: ANOVA.
-Relationship between City and Company. Hypothesis test: Chi-squared test.
-Relationship between Subscription Date and Company. Hypothesis test: ANOVA.
-
-"""
-
-print(hypothesis_testing(df, llm, test_procedure))

@@ -1,9 +1,10 @@
-from flask import Flask
+from flask import Flask, jsonify
 from langchain_google_genai import GoogleGenerativeAI
 import os
 from dotenv import load_dotenv
 import clean
 import design
+import hypothesis
 import pandas as pd
 from flask import request
 
@@ -56,6 +57,20 @@ def design_procedure():
         return procedure
     except Exception as e:
         return f"An error occurred while processing the file: {str(e)}", 500
+
+@app.route("/api/hypothesis_visuals", methods=['POST'])
+def hypothesis_visuals():
+    if 'file' not in request.files:
+        return "No file part in the request", 400
+    file = request.files['file']
+    if file.filename == '':
+        return "No selected file", 400
+    try:
+        df = pd.read_csv(file)
+        procedure = design.design_procedure(df)
+    except Exception as e:
+        return f"An error occurred while processing the file: {str(e)}", 500
+    return jsonify(hypothesis.hypothesis_testing(df, llm, procedure))
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
