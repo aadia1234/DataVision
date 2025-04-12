@@ -201,10 +201,11 @@ export default function Home() {
             designed={true}
             visualized={true}
             analyzed={true}
+            visuals={visuals}
           />
         </div>
       )}
-      <div>
+      {/*<div>
         {visuals.map((base64Str, index) => (
           <img
             key={`image-${index}`}
@@ -212,7 +213,7 @@ export default function Home() {
             alt={`Hypothesis Visual ${index}`}
           />
         ))}
-      </div>
+      </div>*/}
       <footer className="bg-gray-200 w-full h-12 text-xs row-start-3 flex items-center justify-center fixed bottom-0">
         <a
           className="gap-2 text-gray-600 text-bold flex items-center hover:underline hover:underline-offset-4"

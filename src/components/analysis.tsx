@@ -4,6 +4,7 @@ import DropDown from "@/components/ui/dropDown";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import AnalysisHeader from "@/components/analysisHeader";
+import ImageDropDown from "./ui/imageDropDown";
 
 //import { useRouter } from 'next/navigation'
 
@@ -12,6 +13,7 @@ interface AnalysisProps {
   designed: boolean;
   visualized: boolean;
   analyzed: boolean;
+  visuals: string[];
 }
 
 export default function Analysis({
@@ -19,6 +21,7 @@ export default function Analysis({
   designed,
   visualized,
   analyzed,
+  visuals,
 }: AnalysisProps) {
   const [clicked, setClicked] = useState(0);
   const tempData =
@@ -49,12 +52,13 @@ export default function Analysis({
         />
       )}
       {clicked > 1 && (
-        <DropDown
-          text="Running Statistical Tests"
-          clicked={clicked}
-          phaseNum={2}
-          data={tempData}
-        />
+         <ImageDropDown
+         text="Statistical analysis"
+         clicked={clicked}
+         phaseNum={3}
+         data={tempData}
+         images={visuals}
+       />
       )}
       {clicked > 2 && (
         <DropDown
