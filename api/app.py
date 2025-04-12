@@ -6,6 +6,7 @@ import clean
 import design
 import hypothesis
 import pandas as pd
+from flask import request
 
 app = Flask(__name__)
 
@@ -23,17 +24,39 @@ llm = GoogleGenerativeAI(
 def test():
     return "Hello, World!"
 
-@app.route('/api/data_cleaning')
-def hello_world():
-    df = pd.read_csv("customers-100.csv") # Replace with correct csv loading method
-    cleaning_result = clean.data_clean(df, llm)
-    return cleaning_result
+@app.route('/api/data_cleaning', methods=['POST'])
+def clean_data():
+    if 'file' not in request.files:
+        return "No file part in the request", 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return "No selected file", 400
+    
+    try:
+        df = pd.read_csv(file)
+        cleaning_result = clean.data_clean(df, llm)
+        return cleaning_result
+    except Exception as e:
+        return f"An error occurred while processing the file: {str(e)}", 500
 
-@app.route("/api/design-procedure")
+@app.route('/api/design_procedure', methods=['POST'])
 def design_procedure():
-    df = pd.read_csv("customers-100.csv")
-    procedure = design.design_procedure(df)
-    return procedure
+    if 'file' not in request.files:
+        return "No file part in the request", 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return "No selected file", 400
+    
+    try:
+        df = pd.read_csv(file)
+        procedure = design.design_procedure(df)
+        return procedure
+    except Exception as e:
+        return f"An error occurred while processing the file: {str(e)}", 500
 
 @app.route("/api/hypothesis_visuals")
 def hypothesis_visuals(df, analysis, llm):

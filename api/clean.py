@@ -11,13 +11,15 @@ clean_data_prompt_template = PromptTemplate.from_template("""
 You are an expert data scientist. Your task is to observe an overview of what is contained
 in a pandas dataframe and then perform data cleaning on it if it is needed. Observe this overview 
 of the dataframe and determine if it needs any cleaning. If it does not, reply with exactly the phrase
-"NO CLEANING NECESSARY". If it does require cleaning, write a python function that takes the dataframe 
-as input and returns the cleaned dataframe. Respond with only the code and no additional text or explanation.
+"NO CLEANING NECESSARY". If it does require cleaning, write a python function called clean_dataframe that 
+takes the dataframe as input and returns the cleaned dataframe. Respond with only the code and no additional 
+text or explanation.
+
 Here is the overview of the dataframe:
 {data_overview}
 """)
 
-def data_clean(df, llm ):
+def data_clean(df, llm):
     data_overview = utils.overview_data(df)
     clean_data_prompt = clean_data_prompt_template.format(data_overview=data_overview)
     code = utils.cleanCode(llm.invoke(clean_data_prompt))
