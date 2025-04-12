@@ -36,13 +36,8 @@ def design_procedure():
     return procedure
 
 @app.route("/api/hypothesis_visuals")
-def hypothesis_visuals():
-    df = pd.read_csv("customers-100.csv")
-    hypothesis = hypothesis.run_hypothesis_pipeline(df, design_procedure(), llm)
-    return jsonify({
-        "status": 200,
-        "message": hypothesis
-    })
+def hypothesis_visuals(df, analysis, llm):
+    return hypothesis.hypothesis_visuals(df, analysis, llm)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
