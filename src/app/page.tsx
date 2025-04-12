@@ -11,46 +11,12 @@ import AnalysisHeader from "@/components/analysisHeader";
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-<<<<<<< HEAD
-  const [visuals, setVisuals] = useState<string[]>([]);
-=======
   const [cleanResult, setCleanResult] = useState(null);
   const [designResult, setDesignResult] = useState<string | null>(null);
   const [visualizeResult, setVisualizeResult] = useState(null);
   const [analyzeResult, setAnalyzeResult] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
->>>>>>> main
 
-  const getHypothesisVisuals = async () => {
-    const url = "/api/hypothesis_visuals";
-    const formData = new FormData();
-    formData.append("file", file as Blob);
-    
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-  
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-  
-      const result = await response.json();
-      if (result.status === 200) {
-        result.message.figures.forEach((base64String: string, index: number) => {
-          const imgSrc = `data:image/png;base64,${base64String}`;
-          console.log(`Image source for figure ${index + 1}:`, imgSrc);
-          console.log(`Received figure ${index + 1}`);
-        });
-      }
-      setVisuals(result.figures);
-      console.log("Hypothesis Visuals:", result);
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error getting hypothesis visuals");
-    }
-  };
   const cleanData = async () => {
     const url = "/api/data_cleaning";
     const formData = new FormData();
@@ -141,7 +107,6 @@ export default function Home() {
 
         await cleanData();
         await designProcedure();
-        await getHypothesisVisuals(); 
 
         // Implement your file upload/processing functionality here
         toast.success("File processed successfully", {
@@ -209,31 +174,14 @@ export default function Home() {
         <div className="flex flex-col gap-2 w-2/3 h-screen items-center justify-center">
           <AnalysisHeader />
           <Analysis
-<<<<<<< HEAD
-            cleaned={true}
-            designed={true}
-            visualized={true}
-            analyzed={true}
-            visuals={visuals}
-=======
             cleanResult={cleanResult}
             designResult={designResult}
             visualizeResult={visualizeResult}
             analyzeResult={analyzeResult}
             currentStep={currentStep}
->>>>>>> main
           />
         </div>
       )}
-      {/*<div>
-        {visuals.map((base64Str, index) => (
-          <img
-            key={`image-${index}`}
-            src={`data:image/png;base64,${base64Str}`}
-            alt={`Hypothesis Visual ${index}`}
-          />
-        ))}
-      </div>*/}
       <footer className="bg-gray-200 w-full h-12 text-xs row-start-3 flex items-center justify-center fixed bottom-0">
         <a
           className="gap-2 text-gray-600 text-bold flex items-center hover:underline hover:underline-offset-4"
