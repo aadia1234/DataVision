@@ -1,20 +1,12 @@
 import os
 from dotenv import load_dotenv
-from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableLambda
 import utils
 import pandas as pd
+import numpy as np
+from flask import jsonify
 
-load_dotenv()
-
-api_key = os.getenv("GEMINI_API_KEY")
-
-llm = GoogleGenerativeAI(
-    model="gemini-2.0-flash",
-    google_api_key=api_key,
-    temperature=0.7,
-)
 clean_data_prompt_template = PromptTemplate.from_template("""
 You are an expert data scientist. Your task is to observe an overview of what is contained
 in a pandas dataframe and then perform data cleaning on it if it is needed. Observe this overview 
@@ -24,8 +16,6 @@ as input and returns the cleaned dataframe. Respond with only the code and no ad
 Here is the overview of the dataframe:
 {data_overview}
 """)
-
-df = pd.read_csv("customers-100.csv")
 
 def data_clean(df, llm ):
     data_overview = utils.overview_data(df)
@@ -42,11 +32,8 @@ def data_clean(df, llm ):
 
             if clean_function:
                 cleaned_df = clean_function(df)
-                return "Cleaned DataFrame:\n" + cleaned_df.head()
+                return jsonify(cleaned_df.to_dict(orient='records'))
             else:
                 return "Cleaning function not found in generated code."
         except Exception as e:
             return "Error running generated cleaning code:" + str(e)
-
-data_clean(df, llm)
-print("success")

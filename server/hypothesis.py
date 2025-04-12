@@ -23,19 +23,45 @@ llm = GoogleGenerativeAI(
     temperature=0.7,
 )
 
+<<<<<<< HEAD
 prompt_template = PromptTemplate.from_template("""
 Generate python code for hypothesis testing for the following features using matplotlib, pandas, scipy, seaborn. 
 Be sure to generate high quality plots. If the plots are not sufficient, please output further instructions to improve them. 
 When the plots are optimized to the best quality, include the comment "#PLOT_FINAL" at the end of your code.
 Input: {input}
+=======
+code_ht_prompt_template = PromptTemplate.from_template("""
+
+    You are an expert data scientist. Your task is to generate python code for hypothesis 
+    testing for relationships between certain features in a dataframe. The code should run the test,
+    calculating the p value, test statistic, and display the results in an appropriate graph. You 
+    will be provided with the following things: 
+        1. a list of features with which hypothesis tests to conduct for each features
+        2. an overview of the dataframe you are working with
+    
+    Your output should be a python function that performs this hypothesis testing and visualization.
+    You should use matplotlib, scipy, pandas, and seaborn for this.
+    Return only the code and no additional text. 
+    
+    Here is the list of features: 
+    {features}
+    
+    Here is an overview of the dataframe:
+    {overview}
+>>>>>>> main
 """)
 
 def run_hypothesis_analysis(df, input_features, llm):
     try:
+<<<<<<< HEAD
         max_iterations = 5
         final_code = None
         previous_code = None
         iteration = 0
+=======
+        # Format the prompt
+        prompt = code_ht_prompt_template.format(features=input_features, overview=utils.overview_data(df))
+>>>>>>> main
 
         while iteration < max_iterations:
             if previous_code is None:
