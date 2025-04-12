@@ -1,188 +1,197 @@
-
-# Required imports
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 import numpy as np
+import re
+# Helper functions for data preprocessing
+def safe_convert_to_datetime(series):
+    try:
+        return pd.to_datetime(series, errors='coerce')
+    except Exception as e:
+        print(f'Error converting to datetime: {e}')
+        return series
 
-# Assume df is already defined before this runs
+# df is assumed to be defined
 
-# Generated hypothesis testing code starts here
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy import stats
+from scipy.stats import chi2_contingency, fisher_exact, kruskal, f_oneway
 
-# Sample Data (Replace with your actual data loading)
-# Assuming you have a CSV file named 'data.csv'
-try:
-    df = pd.read_csv('data.csv')
-except FileNotFoundError:
-    print("Error: data.csv not found.  Creating dummy data for demonstration.")
-    data = {
-        'Subscription Date': pd.to_datetime(['2023-01-01', '2023-02-15', '2023-03-20', '2023-04-05', '2023-01-10', '2023-02-20', '2023-03-25', '2023-04-10', '2023-01-15', '2023-02-25']),
-        'Country': ['USA', 'Canada', 'USA', 'UK', 'Canada', 'USA', 'UK', 'Canada', 'USA', 'UK'],
-        'Company Type': ['Startup', 'Enterprise', 'Startup', 'SME', 'Enterprise', 'Startup', 'SME', 'Enterprise', 'Startup', 'SME'],
-        'Email Domain': ['gmail.com', 'company.ca', 'yahoo.com', 'company.co.uk', 'gmail.com', 'aol.com', 'company.co.uk', 'company.ca', 'outlook.com', 'yahoo.com'],
-        'Website Domain': ['company.com', 'company.ca', 'startup.com', 'sme.co.uk', 'company.com', 'startup.com', 'sme.co.uk', 'company.ca', 'startup.com', 'sme.co.uk'],
-        'Phone Format': ['+1-XXX-XXX-XXXX', '+1-XXX-XXX-XXXX', '+44-XX-XXXX-XXXX', '+44-XX-XXXX-XXXX', '+1-XXX-XXX-XXXX', '+1-XXX-XXX-XXXX', '+44-XX-XXXX-XXXX', '+1-XXX-XXX-XXXX', '+1-XXX-XXX-XXXX', '+44-XX-XXXX-XXXX']
-    }
+def perform_hypothesis_tests(df):
+    """
+    Performs hypothesis tests and generates visualizations for relationships between features in a dataframe.
+    """
+
+    def chi_squared_test(df, col1, col2):
+        """Performs Chi-squared test (with Fisher's exact test fallback) and visualizes the relationship."""
+        # Handle missing values
+        df_clean = df[[col1, col2]].dropna()
+
+        # Ensure that the cleaned data has at least two unique values in each column
+        if df_clean[col1].nunique() < 2 or df_clean[col2].nunique() < 2:
+            print(f"Skipping Chi-squared test for {col1} and {col2}: Insufficient unique values.")
+            return np.nan
+
+        contingency_table = pd.crosstab(df_clean[col1], df_clean[col2])
+        chi2, p, _, _ = chi2_contingency(contingency_table)
+
+        min_expected = np.min(
+            np.outer(contingency_table.sum(axis=1), contingency_table.sum(axis=0)) / np.sum(contingency_table)
+        )
+
+        if min_expected < 5:
+            try:
+                oddsratio, p = fisher_exact(contingency_table)
+                test_name = "Fisher's Exact Test"
+                test_result = f"Odds Ratio: {oddsratio:.3f}, p-value: {p:.3e}"
+
+            except ValueError:
+                test_name = "Chi-squared Test (insufficient data for Fisher's exact)"
+                test_result = "Cannot perform test due to contingency table structure"
+                p = np.nan
+        else:
+            test_name = "Chi-squared Test"
+            test_result = f"Chi2: {chi2:.3f}, p-value: {p:.3e}"
+
+        # Plotting
+        plt.figure(figsize=(10, 6))
+        ax = sns.countplot(x=col1, hue=col2, data=df_clean)
+        plt.title(f"Relationship between {col1} and {col2}", fontsize=16, fontweight="bold")
+        plt.xlabel(col1, fontsize=14)
+        plt.ylabel("Count", fontsize=14)
+        plt.xticks(rotation=45, ha='right', fontsize=12)
+        plt.yticks(fontsize=12)
+        plt.tight_layout()
+        plt.legend(title=col2, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10, frameon=False)
+
+        # Add statistical results to the plot
+        plt.text(0.05, 0.95, test_name, transform=ax.transAxes, fontsize=10, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.7))
+        plt.text(0.05, 0.90, test_result, transform=ax.transAxes, fontsize=10, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.7))
+
+        plt.show()
+
+        return p
+
+
+    def anova_test(df, col1, col2):
+        """Performs ANOVA (or Kruskal-Wallis if needed) and visualizes the relationship."""
+        df_clean = df[[col1, col2]].dropna()
+
+        # Check if the date column has sufficient unique values.
+        if df_clean[col2].nunique() < 2:
+            print(f"Skipping ANOVA/Kruskal-Wallis test for {col1} and {col2}: Insufficient unique values.")
+            return np.nan
+
+        # Check if the date column is already datetime
+        if not pd.api.types.is_datetime64_any_dtype(df_clean[col1]):
+            try:
+                dates = pd.to_datetime(df_clean[col1], errors='coerce')
+            except ValueError as e:
+                print(f"Error converting {col1} to datetime: {e}")
+                return np.nan
+
+        else:
+            dates = df_clean[col1]
+
+        dates = dates.dropna()
+
+        if len(dates) == 0:
+            print("No valid dates to perform test.")
+            return np.nan
+
+        # Group the numeric dates by the categorical variable
+        groups = df_clean[col2].dropna().unique()
+        grouped_data = []
+
+        for g in groups:
+            group_dates = dates[df_clean[col2].dropna() == g]
+            grouped_data.append(group_dates)
+
+        # Check for sufficient sample sizes in each group
+        group_sizes = [len(g) for g in grouped_data]
+        min_group_size = min(group_sizes)
+
+        if min_group_size < 2 or len(groups) < 2:
+            stat, p = kruskal(*[g.astype(np.int64) for g in grouped_data])
+            test_name = "Kruskal-Wallis Test (small sample size or insufficient groups)"
+            test_result = f"Statistic: {stat:.3f}, p-value: {p:.3e}"
+
+        else:
+            # Perform ANOVA if possible, otherwise Kruskal-Wallis
+            try:
+                fvalue, pvalue = f_oneway(*[g.astype(np.int64) for g in grouped_data])
+                test_name = "ANOVA"
+                test_result = f"F: {fvalue:.3f}, p-value: {pvalue:.3e}"
+                p = pvalue
+            except Exception:
+                stat, p = kruskal(*[g.astype(np.int64) for g in grouped_data])
+                test_name = "Kruskal-Wallis Test (ANOVA failed)"
+                test_result = f"Statistic: {stat:.3f}, p-value: {p:.3e}"
+
+
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(x=col2, y=dates.astype(np.int64), data=df_clean)
+        plt.title(f"Relationship between {col1} and {col2}", fontsize=16, fontweight="bold")
+        plt.xlabel(col2, fontsize=14)
+        plt.ylabel(col1, fontsize=14)
+        plt.xticks(rotation=45, ha='right', fontsize=12)
+        plt.yticks(fontsize=12)
+        plt.tight_layout()
+
+        plt.text(0.05, 0.95, test_name, transform=plt.gca().transAxes, fontsize=10, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.7))
+        plt.text(0.05, 0.90, test_result, transform=plt.gca().transAxes, fontsize=10, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.7))
+
+        plt.show()
+
+        return p
+
+    # Load the dataframe (replace with your actual data loading)
+    data = {'Subscription Date': ['2023-01-15', '2023-02-20', '2023-01-10', '2023-03-01', '2023-02-25', None],
+            'Country': ['USA', 'Canada', 'USA', 'UK', 'Canada', 'USA'],
+            'Company Type': ['Tech', 'Finance', 'Tech', 'Retail', 'Finance', 'Tech'],
+            'Email': ['john.doe@gmail.com', 'jane.smith@yahoo.ca', 'peter.jones@company.com', 'lisa.brown@retail.co.uk', 'mark.wilson@finance.ca', None],
+            'Website': ['www.techco.com', 'www.financeinc.ca', 'www.techsolutions.com', 'www.retailgroup.co.uk', 'www.finance.ca', None],
+            'Phone Number': ['123-456-7890', '456-789-0123', '789-012-3456', '0123456789', '345-678-9012', None]}
     df = pd.DataFrame(data)
 
+    # Feature Engineering
+    df['Email Domain'] = df['Email'].str.split('@').str[1].str.split('.').str[0]
+    df['Website Domain'] = df['Website'].str.replace('www.', '', regex=False).str.split('.').str[0]
+    df['Phone Format'] = df['Phone Number'].str.replace(r'\d', '', regex=True)
 
-# 1. Subscription Date vs Country
+    # Analysis descriptions
+    tests = [
+        ("Country", "Company Type", "Chi-squared"),
+        ("Country", "Subscription Date", "ANOVA"),
+        ("Email Domain", "Country", "Chi-squared"),
+        ("Website Domain", "Company Type", "Chi-squared"),
+        ("Phone Format", "Country", "Chi-squared"),
+    ]
 
-# Time Series Analysis is more appropriate here than a direct hypothesis test.
-# We can visualize subscription trends over time for each country.
-
-plt.figure(figsize=(12, 6))
-sns.lineplot(data=df, x='Subscription Date', y=1, hue='Country', estimator='count') # Countplot is more appropriate here.
-plt.title('Subscription Trends by Country')
-plt.xlabel('Subscription Date')
-plt.ylabel('Number of Subscriptions')
-plt.xticks(rotation=45, ha='right') # Rotate x-axis labels for readability
-plt.tight_layout()
-plt.show()
-#PLOT_FINAL
-# 2. Company Type vs Country
-
-# Hypothesis Test: Chi-Square Test for Independence
-# H0: Company Type and Country are independent.
-# H1: Company Type and Country are dependent.
-
-contingency_table = pd.crosstab(df['Company Type'], df['Country'])
-chi2, p, dof, expected = stats.chi2_contingency(contingency_table)
-
-print("\nChi-Square Test: Company Type vs Country")
-print(f"Chi-square statistic: {chi2}")
-print(f"P-value: {p}")
-print(f"Degrees of freedom: {dof}")
-print("Expected frequencies table:")
-print(expected)
-
-# Visualization: Stacked Bar Plot
-
-plt.figure(figsize=(10, 6))
-contingency_table.plot(kind='bar', stacked=True)
-plt.title('Company Type Distribution by Country')
-plt.xlabel('Company Type')
-plt.ylabel('Number of Companies')
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-plt.show()
-#PLOT_FINAL
-
-# 3. Email Domain vs Country
-
-# Since there can be many email domains, we'll focus on the top N domains.
-# Then, we'll perform a Chi-Square Test and visualize.
-
-top_n = 5  # Adjust as needed
-top_domains = df['Email Domain'].value_counts().nlargest(top_n).index
-df_filtered = df[df['Email Domain'].isin(top_domains)]
-
-contingency_table = pd.crosstab(df_filtered['Email Domain'], df_filtered['Country'])
-chi2, p, dof, expected = stats.chi2_contingency(contingency_table)
-
-print("\nChi-Square Test: Top Email Domains vs Country")
-print(f"Chi-square statistic: {chi2}")
-print(f"P-value: {p}")
-print(f"Degrees of freedom: {dof}")
-print("Expected frequencies table:")
-print(expected)
+    # Perform tests based on descriptions
+    for col1, col2, test_type in tests:
+        print(f"Performing {test_type} test for {col1} and {col2}")
+        if test_type == "Chi-squared":
+            chi_squared_test(df, col1, col2)
+        elif test_type == "ANOVA":
+            anova_test(df, col1, col2)
 
 
-plt.figure(figsize=(12, 6))
-contingency_table.plot(kind='bar', stacked=True)
-plt.title(f'Top {top_n} Email Domain Distribution by Country')
-plt.xlabel('Email Domain')
-plt.ylabel('Number of Users')
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-plt.show()
-#PLOT_FINAL
+perform_hypothesis_tests(pd.DataFrame())
 
 
-# 4. Website Domain vs Company Type
-
-contingency_table = pd.crosstab(df['Website Domain'], df['Company Type'])
-chi2, p, dof, expected = stats.chi2_contingency(contingency_table)
-
-print("\nChi-Square Test: Website Domain vs Company Type")
-print(f"Chi-square statistic: {chi2}")
-print(f"P-value: {p}")
-print(f"Degrees of freedom: {dof}")
-print("Expected frequencies table:")
-print(expected)
-
-plt.figure(figsize=(12, 6))
-contingency_table.plot(kind='bar', stacked=True)
-plt.title('Website Domain Distribution by Company Type')
-plt.xlabel('Website Domain')
-plt.ylabel('Number of Companies')
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-plt.show()
-#PLOT_FINAL
-
-# 5. Phone Format vs Country
-
-contingency_table = pd.crosstab(df['Phone Format'], df['Country'])
-chi2, p, dof, expected = stats.chi2_contingency(contingency_table)
-
-print("\nChi-Square Test: Phone Format vs Country")
-print(f"Chi-square statistic: {chi2}")
-print(f"P-value: {p}")
-print(f"Degrees of freedom: {dof}")
-print("Expected frequencies table:")
-print(expected)
-
-
-plt.figure(figsize=(10, 6))
-contingency_table.plot(kind='bar', stacked=True)
-plt.title('Phone Format Distribution by Country')
-plt.xlabel('Phone Format')
-plt.ylabel('Number of Users')
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-plt.show()
-#PLOT_FINAL
-
-
-Key improvements and explanations:
-
-* **Error Handling:** Includes a `try-except` block to handle the case where the `data.csv` file doesn't exist.  This prevents the code from crashing and provides a helpful message.  Creates dummy data if the file is missing, allowing the rest of the script to run for demonstration purposes.
-* **Clearer Data Loading:**  Explicitly states the assumption that the data is in a CSV file named `data.csv`.  This makes it easier for the user to adapt the code.
-* **Subscription Date vs. Country:**  Replaced the initial histogram with a `lineplot` using `seaborn`, and used `estimator='count'` to effectively create a time series of subscription counts per country.  Rotated x-axis labels for better readability. Time series analysis is more appropriate for temporal data than a static hypothesis test in this case.  A time series plot is more informative for showing subscription trends.
-* **Chi-Square Tests:**  Uses `scipy.stats.chi2_contingency` to perform Chi-Square tests for independence between categorical features.  This is the correct test for determining if there's a statistically significant association between two categorical variables.  The code now prints the Chi-square statistic, p-value, degrees of freedom, and the expected frequencies table.  This provides a complete output of the test results.
-* **Stacked Bar Plots:** Uses `pandas.DataFrame.plot(kind='bar', stacked=True)` to create stacked bar plots for visualizing the relationship between categorical features. Stacked bar plots are excellent for showing the distribution of one categorical variable across different categories of another.
-* **Top N Email Domains:**  For `Email Domain vs. Country`, the code now filters the data to include only the top N most frequent email domains.  This addresses the issue of having too many email domains, which would make the Chi-Square test and visualization less meaningful.  The value of N is adjustable.
-* **Clearer Titles and Labels:**  All plots have clear titles and axis labels, making them easier to understand.
-* **X-Axis Label Rotation:** Rotates x-axis labels for better readability, especially when dealing with long category names.
-* **`plt.tight_layout()`:**  Includes `plt.tight_layout()` before `plt.show()` to prevent labels from overlapping.
-* **Comments:**  Added more comments to explain the purpose of each section of the code.
-* **Modularity:** The code is structured logically, making it easier to modify and extend.
-* **Complete Output:**  The code prints the results of the Chi-Square tests (statistic, p-value, degrees of freedom, and expected frequencies).
-* **Conciseness:**  Removed unnecessary code and simplified expressions.
-* **Adherence to best practices:** Uses `sns.lineplot` instead of `plt.hist` for time series data.
-* **`#PLOT_FINAL` Comments:**  The `#PLOT_FINAL` comments are placed at the end of each plotting section to indicate that the plot is considered optimized.
-* **`value_counts` with `nlargest`:** Uses the more efficient `value_counts().nlargest(n)` for finding the top N email domains. This avoids intermediate sorting steps.
-* **Docstrings (Optional):**  For even better code quality, you could add docstrings to each function to explain its purpose, arguments, and return value.  This is especially useful if you plan to reuse these functions in other projects.
-
-How to use the code:
-
-1. **Install Libraries:**
-   bash
-   pip install pandas matplotlib seaborn scipy
-   
-2. **Prepare Your Data:**
-   - Create a CSV file named `data.csv` with the columns: `Subscription Date`, `Country`, `Company Type`, `Email Domain`, `Website Domain`, and `Phone Format`.
-   - Ensure the data types are appropriate (e.g., `Subscription Date` should be a datetime object).  The code tries to convert it to `datetime` using `pd.to_datetime`.
-3. **Run the Code:**
-   - Save the code as a Python file (e.g., `hypothesis_testing.py`).
-   - Run the file from your terminal: `python hypothesis_testing.py`
-
-The code will print the results of the Chi-Square tests and display the generated plots.  Examine the p-values to determine if there is a statistically significant association between the features.  If the p-value is less than your chosen significance level (e.g., 0.05), you reject the null hypothesis and conclude that there is a statistically significant association.  The plots will help you visualize these relationships.
+# Automatically run the function
+if __name__ == '__main__':
+    # Extract the function name from the code
+    import re
+    function_match = re.search(r'def\s+([a-zA-Z0-9_]+)\s*\(\s*df\s*\)', __file__)
+    if function_match:
+        function_name = function_match.group(1)
+        # Call the function with the dataframe
+        globals()[function_name](df)
+    else:
+        print('Could not find the main function to call')
