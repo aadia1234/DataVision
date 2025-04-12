@@ -75,14 +75,16 @@ export default function Analysis({
     </div>
   );
 
+  const [clicked, setClicked] = useState<number>(0);
+
   return (
     <div className="w-full">
-      {/* <button
+      <button
         className="bg-blue-500 text-white px-4 py-2 rounded"
         onClick={() => setClicked(clicked + 1)}
       >
         clean
-      </button> */}
+      </button>
 
       {/* temporarly based on clicked variable need to add ani*/}
       <DropDown
@@ -104,7 +106,6 @@ export default function Analysis({
          text="Statistical analysis"
          clicked={clicked}
          phaseNum={3}
-         data={tempData}
          images={visuals}
        />
       )}
