@@ -1,28 +1,40 @@
-import { ChevronDown } from "lucide-react";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+  } from "@/components/ui/accordion"
+// interface dropDownProps {
+//     text: string // title of block
+//     clicked: number //state of processes
+//     phaseNum: number //0 is first step
+//     data: any // drop down info
 
-interface StatTestIndicatorProps {
-  text: string;
-  clicked: number;
-  phaseNum: number; //0 is first step
-}
+//   }
 
-const offset = 6;
-
-export default function dropDown({
-  text,
-  clicked,
-  phaseNum,
-}: StatTestIndicatorProps) {
-  return (
-    <div>
-      <p
-        className={` flex flex-col w-full absolute left-10 clicked>2 ?"text-[17px]"
-            :"loading"`}
-      >
-        {`${text} ${clicked}`}
-      </p>
-      <ChevronDown className="absolute left-15" size={50} />
-      {/* {phaseNum > 0 && clicked > phaseNum && } */}
-    </div>
-  );
+export default function DropDown({text, clicked, phaseNum, data}: {
+    text: string
+    clicked: number 
+    phaseNum: number
+    data: any }
+) {
+    return(
+     <div>
+        <Accordion type="single" collapsible>
+            <AccordionItem value="item-1">
+              <AccordionTrigger>
+                <div>
+                <p className={clicked>phaseNum ?"text-[17px] absolute left-5":"absolute left-5 loading"}>
+                    {text}
+                </p>
+                </div>
+              </AccordionTrigger>
+              {clicked > phaseNum &&
+              <AccordionContent>
+                {data}
+              </AccordionContent>
+              }
+            </AccordionItem>
+          </Accordion>
+    </div>)
 }

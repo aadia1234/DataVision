@@ -3,7 +3,7 @@ import base64
 from flask import send_file
 
 def cleanCode(code):
-    return code.replace("```python", "").replace("```", "")
+    return code.replace("```python", "").replace("```json", "").replace("```", "")
 
 def overview_data(df):
     output = "Data Overview:\n"
