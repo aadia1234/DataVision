@@ -10,6 +10,7 @@ import Analysis from "@/components/analysis";
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [visuals, setVisuals] = useState<string[]>([]);
 
   const getHypothesisVisuals = async () => {
     const url = "/api/hypothesis_visuals";
@@ -34,6 +35,7 @@ export default function Home() {
           console.log(`Received figure ${index + 1}`);
         });
       }
+      setVisuals(result.figures);
       console.log("Hypothesis Visuals:", result);
     } catch (error) {
       console.error("Error:", error);
@@ -198,6 +200,15 @@ export default function Home() {
           analyzed={true}
         />
       )}
+      <div>
+        {visuals.map((base64Str, index) => (
+          <img
+            key={`image-${index}`}
+            src={`data:image/png;base64,${base64Str}`}
+            alt={`Hypothesis Visual ${index}`}
+          />
+        ))}
+      </div>
       <footer className="bg-gray-200 w-full h-12 text-xs row-start-3 flex items-center justify-center fixed bottom-0">
         <a
           className="gap-2 text-gray-600 text-bold flex items-center hover:underline hover:underline-offset-4"

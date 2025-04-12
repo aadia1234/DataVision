@@ -70,7 +70,7 @@ def hypothesis_visuals():
         procedure = design.design_procedure(df)
     except Exception as e:
         return f"An error occurred while processing the file: {str(e)}", 500
-    return hypothesis.hypothesis_testing(df, llm, procedure)
+    return jsonify(hypothesis.hypothesis_testing(df, llm, procedure))
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
