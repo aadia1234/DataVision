@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from langchain_google_genai import GoogleGenerativeAI
 import os
 from dotenv import load_dotenv
@@ -8,7 +8,7 @@ import hypothesis
 import summarize
 import utils
 import pandas as pd
-from flask import request
+import uuid
 
 app = Flask(__name__)
 
@@ -22,22 +22,41 @@ llm = GoogleGenerativeAI(
     temperature=0.7,
 )
 
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def get_file_path(file_id):
+    return os.path.join(UPLOAD_FOLDER, f"{file_id}.csv")
+
+
 @app.route('/api/test')
 def test():
     return "Hello, World!"
 
-@app.route('/api/data_cleaning', methods=['POST'])
-def clean_data():
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
     if 'file' not in request.files:
         return "No file part in the request", 400
-    
+
     file = request.files['file']
-    
+
     if file.filename == '':
         return "No selected file", 400
+
+    try:
+        file_id = str(uuid.uuid4())
+        filepath = get_file_path(file_id)
+        file.save(filepath)
+        return jsonify({"file_id": file_id})
+    except Exception as e:
+        return f"An error occurred while saving the file: {str(e)}", 500
+
+@app.route('/api/data_cleaning', methods=['POST'])
+def clean_data():
+    file_id = request.json.get('file_id')
     
     try:
-        df = pd.read_csv(file)
+        df = pd.read_csv(get_file_path(file_id))
         cleaning_result = clean.data_clean(df, llm)
         return cleaning_result
     except Exception as e:
@@ -45,16 +64,10 @@ def clean_data():
 
 @app.route('/api/design_procedure', methods=['POST'])
 def design_procedure():
-    if 'file' not in request.files:
-        return "No file part in the request", 400
-    
-    file = request.files['file']
-    
-    if file.filename == '':
-        return "No selected file", 400
+    file_id = request.json.get('file_id')
     
     try:
-        df = pd.read_csv(file)
+        df = pd.read_csv(get_file_path(file_id))
         procedure = design.design_procedure(df)
         return procedure
     except Exception as e:
@@ -62,12 +75,11 @@ def design_procedure():
 
 @app.route("/api/hypothesis_test", methods=['POST'])
 def hypothesis_test():
-    if 'file' not in request.files:
-        return "No file part in the request", 400
-    file = request.files['file']
+    file_id = request.json.get('file_id')
+
     try:
-        df = pd.read_csv(file)
-        procedure = request.form.get('designResult')
+        df = pd.read_csv(get_file_path(file_id))
+        procedure = request.json.get('designResult')
     except Exception as e:
         return f"An error occurred while processing the file: {str(e)}", 500
     return jsonify(hypothesis.hypothesis_testing(df, llm, procedure))
