@@ -86,40 +86,42 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-white grid grid-rows-[56px_1fr_56px] items-center justify-items-center min-h-screen font-[family-name:var(--font-geist-sans)]">      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-      <p className="text-5xl">DataVision</p>
+    <div className="bg-white grid grid-rows-[56px_1fr_56px] items-center justify-items-center min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
+        <p className="text-5xl m-auto">DataVision</p>
 
-      <div className="flex flex-col w-full max-w-md gap-4">
-        <div className="flex items-center gap-2">
-          <Input
-            type="file"
-            id="fileUpload"
-            className="hidden"
-            accept=".csv,text/csv"
-            onChange={handleFileChange}
-            disabled={isLoading}
-          />
-          <label
-            htmlFor="fileUpload"
-            className={`m-auto cursor-pointer flex items-center px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Upload CSV
-          </label>
+        <div className="flex flex-col w-full max-w-md gap-4">
+
+          {isLoading ?
+            <div className="flex flex-col gap-2 items-center justify-center text-center text-sm text-primary/80">
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Processing your CSV file...
+            </div>
+            :
+            <div className="flex items-center gap-2">
+              <Input
+                type="file"
+                id="fileUpload"
+                className="hidden"
+                accept=".csv,text/csv"
+                onChange={handleFileChange}
+                disabled={isLoading}
+              />
+              <label
+                htmlFor="fileUpload"
+                className={`text-lg text-center flex-col gap-2 m-auto px-20 py-10 border-2 border-dashed border-primary/50 cursor-pointer flex items-center rounded-md text-primary hover:bg-primary/10 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+              >
+                <Upload className="h-8 aspect-square" />
+                Upload CSV
+              </label>
+            </div>
+          }
         </div>
-
-        {isLoading && (
-          <div className="flex items-center justify-center text-center text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Processing your CSV file...
-          </div>
-        )}
-      </div>
-    </main>
+      </main>
       <footer className="bg-gray-200 w-full h-14 row-start-3 flex items-center justify-center">
         <a
-          className="gap-2 text-gray-600 flex items-center hover:underline hover:underline-offset-4"
-          href="https://www.aadiananddeveloper05.com"
+          className="gap-2 text-gray-600 text-bold flex items-center hover:underline hover:underline-offset-4"
+          href="https://github.com/aadia1234/DataVision"
           target="_blank"
           rel="noopener noreferrer"
         >
