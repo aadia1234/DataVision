@@ -58,9 +58,19 @@ def design_procedure():
     except Exception as e:
         return f"An error occurred while processing the file: {str(e)}", 500
 
-@app.route("/api/hypothesis_visuals")
-def hypothesis_visuals(df, analysis, llm):
-    return hypothesis.hypothesis_visuals(df, analysis, llm)
+@app.route("/api/hypothesis_visuals", methods=['POST'])
+def hypothesis_visuals():
+    if 'file' not in request.files:
+        return "No file part in the request", 400
+    file = request.files['file']
+    if file.filename == '':
+        return "No selected file", 400
+    try:
+        df = pd.read_csv(file)
+        procedure = design.design_procedure(df)
+    except Exception as e:
+        return f"An error occurred while processing the file: {str(e)}", 500
+    return hypothesis.hypothesis_testing(df, llm, procedure)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

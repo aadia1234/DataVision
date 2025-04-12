@@ -12,6 +12,35 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [demoText, setDemoText] = useState("Demo text");
 
+  const getHypothesisVisuals = async () => {
+    const url = "/api/hypothesis_visuals";
+    const formData = new FormData();
+    formData.append("file", file as Blob);
+    
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+  
+      const result = await response.json();
+      if (result.status === 200) {
+        result.message.figures.forEach((base64String: string, index: number) => {
+          const imgSrc = `data:image/png;base64,${base64String}`;
+          console.log(`Image source for figure ${index + 1}:`, imgSrc);
+          console.log(`Received figure ${index + 1}`);
+        });
+      }
+      console.log("Hypothesis Visuals:", result);
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error getting hypothesis visuals");
+    }
+  };
   const cleanData = async () => {
     const url = "/api/data_cleaning";
     const formData = new FormData();
@@ -98,6 +127,7 @@ export default function Home() {
 
         await cleanData();
         await designProcedure();
+        await getHypothesisVisuals(); 
 
         // Implement your file upload/processing functionality here
         toast.success("File processed successfully", {
