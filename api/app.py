@@ -1,9 +1,10 @@
-from flask import Flask
+from flask import Flask, jsonify
 from langchain_google_genai import GoogleGenerativeAI
 import os
 from dotenv import load_dotenv
 import clean
 import design
+import hypothesis
 import pandas as pd
 
 app = Flask(__name__)
@@ -33,6 +34,15 @@ def design_procedure():
     df = pd.read_csv("customers-100.csv")
     procedure = design.design_procedure(df)
     return procedure
+
+@app.route("/api/hypothesis_visuals")
+def hypothesis_visuals():
+    df = pd.read_csv("customers-100.csv")
+    hypothesis = hypothesis.run_hypothesis_pipeline(df, design_procedure(), llm)
+    return jsonify({
+        "status": 200,
+        "message": hypothesis
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

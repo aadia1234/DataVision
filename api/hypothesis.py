@@ -1,11 +1,8 @@
-import os
 import ast
 import base64
 from io import BytesIO
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use('TkAgg', force=True)
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as stats
@@ -13,37 +10,6 @@ from dotenv import load_dotenv
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 import utils
-
-
-load_dotenv()
-
-api_key = os.getenv("GEMINI_API_KEY")
-
-llm = GoogleGenerativeAI(
-    model="gemini-2.0-flash",
-    google_api_key=api_key,
-    temperature=0.7,
-)
-
-code_ht_prompt_template = PromptTemplate.from_template("""
-
-    You are an expert data scientist. Your task is to generate python code for hypothesis 
-    testing for relationships between certain features in a dataframe. The code should run the test,
-    calculating the p value, test statistic, and display the results in an appropriate graph. You 
-    will be provided with the following things: 
-        1. a list of features with which hypothesis tests to conduct for each features
-        2. an overview of the dataframe you are working with
-    
-    Your output should be a python function that performs this hypothesis testing and visualization.
-    You should use matplotlib, scipy, pandas, and seaborn for this.
-    Return only the code and no additional text. 
-    
-    Here is the list of features: 
-    {features}
-    
-    Here is an overview of the dataframe:
-    {overview}
-""")
 
 def run_hypothesis_pipeline(df, input_features, llm):
     def plot_to_base64():
