@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Analysis from "@/components/analysis";
+import AnalysisHeader from "@/components/analysisHeader";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -151,9 +152,9 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-white grid grid-rows-[56px_1fr_56px] items-center justify-items-center min-h-screen font-[family-name:var(--font-geist-sans)]">
+    <div className="bg-white flex items-center justify-center items-center w-full h-screen font-[family-name:var(--font-geist-sans)]">
       {!file && (
-        <main className="flex flex-col gap-6 row-start-2 items-center justify-center w-full">
+        <div className="flex flex-col gap-6 row-start-2 items-center justify-center w-3/4">
           <div className="flex flex-col gap-2 items-center justify-center text-center text-primary/80">
             <p className="text-5xl m-auto">DataVision</p>
             <i className="text-center w-full">
@@ -190,15 +191,18 @@ export default function Home() {
               </div>
             )}
           </div>
-        </main>
+        </div>
       )}
       {file && (
-        <Analysis
-          cleaned={true}
-          designed={true}
-          visualized={true}
-          analyzed={true}
-        />
+        <div className="flex flex-col gap-2 w-2/3 h-screen items-center justify-center">
+          <AnalysisHeader />
+          <Analysis
+            cleaned={true}
+            designed={true}
+            visualized={true}
+            analyzed={true}
+          />
+        </div>
       )}
       <div>
         {visuals.map((base64Str, index) => (
