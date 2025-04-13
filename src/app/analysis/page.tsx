@@ -7,22 +7,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import Footer from "@/components/footer";
-
-
-const Header = ({ onClick }: { onClick: () => void }) => {
-    return (
-        <div>
-            <div className="w-screen h-10 fixed top-0 left-0 pt-6">
-                <div className="flex justify-center items-center h-10">
-                    <Button onClick={onClick} variant="ghost" className="absolute left-5" size="icon">
-                        <ChevronLeft style={{ scale: 2 }} />
-                    </Button>
-                    <p className="text-4xl mt-[-5px]">Analysis</p>
-                </div>
-            </div>
-        </div>
-    );
-}
+import Header from "@/components/header";
 
 export default function Analysis() {
     const tempData = "tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData tempData  ";
@@ -64,7 +49,7 @@ export default function Analysis() {
 
             const result = await response.json();
             console.log("TEST");
-            setAnalysis((prev) => ({ ...prev, cleanResult: result }));            return result.summary;
+            setAnalysis((prev) => ({ ...prev, cleanResult: result })); return result.summary;
         } catch (error) {
             console.error("Error:", error);
         }
@@ -203,7 +188,7 @@ export default function Analysis() {
     );
 
     return (
-        <div className="bg-white flex justify-center items-center w-full h-screen font-[family-name:var(--font-geist-sans)]">
+        <div className="bg-white flex flex-col w-full h-screen font-[family-name:var(--font-geist-sans)]">
             <Header onClick={() => window.history.back()} />
             <div className="w-full">
                 {/* <button

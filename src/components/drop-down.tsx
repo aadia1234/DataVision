@@ -13,7 +13,7 @@ export default function DropDown({
   view: any | undefined | null;
 }) {
   return (
-    <div>
+    <div className="px-10">
       <Accordion type="single" collapsible>
         <AccordionItem value={`item-${text}`}>
           <AccordionTrigger disabled={!view}>
