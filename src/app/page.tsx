@@ -22,7 +22,7 @@ export default function Home() {
   }, [file]);
 
   const uploadFile = async () => {
-    const url = "/api/upload-file";
+    const url = "/api/upload";
     const formData = new FormData();
     formData.append("file", file as Blob);
 

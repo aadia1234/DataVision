@@ -35,14 +35,14 @@ export default function Analysis() {
 
     const id = searchParams.get("id");
 
-    const load = async () => {
-        const cleanSummary = await cleanData();
-        const designRes = await designProcedure();
-        await hypothesisTest(designRes ?? null);
-        await summarize(cleanSummary ?? null, designRes ?? null, "p values go here");
-    };
-
     useEffect(() => {
+        const load = async () => {
+            const cleanSummary = await cleanData();
+            const designRes = await designProcedure();
+            await hypothesisTest(designRes ?? null);
+            await summarize(cleanSummary ?? null, designRes ?? null, "p values go here");
+        };
+
         load();
     }, []);
 
@@ -52,16 +52,19 @@ export default function Analysis() {
         try {
             const response = await fetch(url, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id }),
             });
+
+            console.log(response);
 
             if (!response.ok) {
                 throw new Error("Network response was not ok");
             }
 
             const result = await response.json();
-            setAnalysis({ ...analysis, cleanResult: result });
-            return result.summary;
+            console.log("TEST");
+            setAnalysis((prev) => ({ ...prev, cleanResult: result }));            return result.summary;
         } catch (error) {
             console.error("Error:", error);
         }
@@ -70,9 +73,12 @@ export default function Analysis() {
     const designProcedure = async () => {
         const url = "/api/design_procedure";
 
+        console.log("DESIGN PROCEDURE: ", id);
+
         try {
             const response = await fetch(url, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id }),
             });
 
@@ -81,7 +87,7 @@ export default function Analysis() {
             }
 
             const result = await response.text();
-            setAnalysis({ ...analysis, designResult: result });
+            setAnalysis((prev) => ({ ...prev, designResult: result }));
             console.log("Analysis Procedure:", result);
             return result;
         } catch (error) {
@@ -105,6 +111,7 @@ export default function Analysis() {
 
             const response = await fetch(url, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: formData,
             });
 
@@ -136,9 +143,7 @@ export default function Analysis() {
         try {
             const response = await fetch(url, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
         } catch (error) {

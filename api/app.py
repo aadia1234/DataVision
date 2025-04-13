@@ -25,8 +25,8 @@ llm = GoogleGenerativeAI(
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-def get_file_path(file_id):
-    return os.path.join(UPLOAD_FOLDER, f"{file_id}.csv")
+def get_file_path(id):
+    return os.path.join(UPLOAD_FOLDER, f"{id}.csv")
 
 
 @app.route('/api/test')
@@ -44,19 +44,19 @@ def upload_file():
         return "No selected file", 400
 
     try:
-        file_id = str(uuid.uuid4())
-        filepath = get_file_path(file_id)
+        id = str(uuid.uuid4())
+        filepath = get_file_path(id)
         file.save(filepath)
-        return jsonify({"file_id": file_id})
+        return jsonify({"id": id})
     except Exception as e:
         return f"An error occurred while saving the file: {str(e)}", 500
 
 @app.route('/api/data_cleaning', methods=['POST'])
 def clean_data():
-    file_id = request.json.get('file_id')
-    
+    id = request.json.get('id')
+        
     try:
-        df = pd.read_csv(get_file_path(file_id))
+        df = pd.read_csv(get_file_path(id))
         cleaning_result = clean.data_clean(df, llm)
         return cleaning_result
     except Exception as e:
@@ -64,10 +64,10 @@ def clean_data():
 
 @app.route('/api/design_procedure', methods=['POST'])
 def design_procedure():
-    file_id = request.json.get('file_id')
+    id = request.json.get('id')
     
     try:
-        df = pd.read_csv(get_file_path(file_id))
+        df = pd.read_csv(get_file_path(id))
         procedure = design.design_procedure(df)
         return procedure
     except Exception as e:
@@ -75,10 +75,10 @@ def design_procedure():
 
 @app.route("/api/hypothesis_test", methods=['POST'])
 def hypothesis_test():
-    file_id = request.json.get('file_id')
+    id = request.json.get('id')
 
     try:
-        df = pd.read_csv(get_file_path(file_id))
+        df = pd.read_csv(get_file_path(id))
         procedure = request.json.get('designResult')
     except Exception as e:
         return f"An error occurred while processing the file: {str(e)}", 500
