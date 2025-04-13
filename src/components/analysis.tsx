@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import DropDown from "@/components/dropDown";
+import DropDown from "@/components/drop-down";
 import { Button } from "@/components/ui/button";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import ImageDropDown from "./ui/imageDropDown";
 import { Input } from "@/components/ui/input";
 import { Send, Paperclip } from "lucide-react";
 
