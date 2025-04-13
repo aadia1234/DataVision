@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import DropDown from "@/components/dropDown";
+import DropDown from "@/components/drop-down";
 import { Button } from "@/components/ui/button";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import ImageDropDown from "./ui/imageDropDown";
-import { Input } from "@/components/ui/input";
-import { Send, Paperclip } from "lucide-react";
+import Chat from "./chat";
 
 interface AnalysisProps {
   cleanResult: Record<string, any> | null;
@@ -77,8 +75,8 @@ export default function Analysis({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
+  const sendMessage = async (message: string): Promise<string> => {
+    if (!message.trim()) return Promise.reject("Message cannot be empty.");
 
     const newUserMessage: Message = {
       id: Date.now().toString(),
@@ -98,7 +96,7 @@ export default function Analysis({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: inputMessage,
+          message: message,
           currentStep: currentStep,
           history: messages.map((msg) => ({
             role: msg.role,
@@ -121,6 +119,7 @@ export default function Analysis({
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      return data.message || "Sorry, I couldn't process your request.";
     } catch (error) {
       console.error("Error sending message:", error);
 
@@ -132,7 +131,7 @@ export default function Analysis({
         timestamp: new Date(),
       };
 
-      setMessages((prev) => [...prev, errorMessage]);
+      return Promise.reject("Error sending message.");
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +140,7 @@ export default function Analysis({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      sendMessage(inputMessage);
     }
   };
 
@@ -175,112 +174,42 @@ export default function Analysis({
     <div className="w-full">
       <DropDown
         text="Cleaning Data"
-        clicked={currentStep}
-        phaseNum={0}
-        data={CleaningStepData}
+        view={CleaningStepData}
       />
       {currentStep > 0 && (
         <DropDown
           text="Designing Analysis Procedure"
-          clicked={currentStep}
-          phaseNum={1}
-          data={DesignStepData}
+          view={DesignStepData}
         />
       )}
       {currentStep > 1 && (
-        <ImageDropDown
+        <DropDown
           text="Running Statistical Tests"
-          clicked={currentStep}
-          phaseNum={2}
-          images={hypothesisTestingResult.figures || []}
-          p_vals={hypothesisTestingResult.p_values || []}
+          view={{
+            images: hypothesisTestingResult.figures || [],
+            p_vals: hypothesisTestingResult.p_values || [],
+          }}
         />
       )}
       {currentStep > 2 && (
         <DropDown
           text="Found Data!"
-          clicked={currentStep}
-          phaseNum={3}
-          data={tempData}
+          view={tempData}
         />
       )}
-
-      <div className="mt-8 border rounded-lg shadow-md">
-        <div className="bg-gray-100 p-4 rounded-t-lg border-b">
-          <h3 className="font-semibold text-gray-800">
-            Data Analysis Assistant
-          </h3>
-        </div>
-
-        <div className="h-80 overflow-y-auto p-4 space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-3/4 p-3 rounded-lg ${
-                  message.role === "user"
-                    ? "bg-blue-500 text-white rounded-br-none"
-                    : "bg-gray-200 text-gray-800 rounded-bl-none"
-                }`}
-              >
-                {message.content}
-                <div
-                  className={`text-xs mt-1 ${
-                    message.role === "user" ? "text-blue-100" : "text-gray-500"
-                  }`}
-                >
-                  {message.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-              </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-200 text-gray-800 p-3 rounded-lg rounded-bl-none">
-                <div className="flex space-x-2">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.4s" }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <div className="p-3 border-t flex gap-2">
-          <Button variant="outline" size="icon" className="shrink-0">
-            <Paperclip className="h-5 w-5" />
-          </Button>
-          <Input
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Type your message..."
-            className="flex-1"
-          />
-          <Button
-            onClick={sendMessage}
-            disabled={isLoading || !inputMessage.trim()}
-            className="shrink-0"
-          >
-            <Send className="h-5 w-5 mr-1" />
-            Send
-          </Button>
-        </div>
+      <div className="mt-8">
+        <Chat
+          initialMessages={[
+            {
+              id: "1",
+              content: "Hello! I'm your data analysis assistant. Ask me anything about your analysis.",
+              role: "assistant",
+              timestamp: new Date(),
+            },
+          ]}
+          onSendMessage={sendMessage}
+          title="Data Analysis Assistant"
+        />
       </div>
     </div>
   );
